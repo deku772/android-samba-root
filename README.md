@@ -3,10 +3,10 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: '40e4effd-302e-4444-9b1f-29210cc59db2'
-  PropagateID: '40e4effd-302e-4444-9b1f-29210cc59db2'
-  ReservedCode1: 'cb7c6dae-a9c4-4436-ad07-3b283c383b0f'
-  ReservedCode2: 'cb7c6dae-a9c4-4436-ad07-3b283c383b0f'
+  ProduceID: 'a98f4c2c-3fe5-4fc4-8358-5c49713c11ad'
+  PropagateID: 'a98f4c2c-3fe5-4fc4-8358-5c49713c11ad'
+  ReservedCode1: '414205ec-71e3-4134-bc60-f675138080d1'
+  ReservedCode2: '414205ec-71e3-4134-bc60-f675138080d1'
 ---
 
 # Android Samba (Root) — 已 root 安卓手机局域网文件共享
@@ -259,17 +259,24 @@ Windows 资源管理器地址栏输入：
 
 Samba 的 tdb 数据库文件必须由 Termux 用户（UID 10475）拥有。如果 root 操作产生了 root 属主的 tdb 文件，smbd 会崩溃。解决方法是删除旧文件，让 Termux 用户在首次启动时自动重建。
 
-### iptables 规则重启后失效
+### iptables / bind mount / smbd 重启后失效
 
-iptables 规则在手机重启后消失。如需持久化，可用 Magisk 模块或 init.d 脚本。
+以上三项在手机重启后均会失效。已通过 KernelSU `service.d` 脚本实现**开机自启**，无需手动操作。
 
-### bind mount 重启后失效
+自动脚本 `samba-autostart.sh` 会在开机后（网络就绪）自动执行：
+1. iptables 445→4445 端口转发
+2. 迅雷目录 bind mount + 父目录权限修复
+3. 以 Termux 用户身份 + 补充组启动 smbd
 
-迅雷下载目录的 bind mount 和父目录权限修复在手机重启后失效。需重新执行 `mount-xunlei.sh` 或 `bash setup.sh --xunlei`。
-
-### smbd 进程重启后需手动启动
-
-Termux 不是系统服务，smbd 进程在手机重启后不会自动运行。可配合 Termux:Boot 插件实现开机自启。
+> **前提**：手机使用 KernelSU root。脚本安装路径：`/data/adb/service.d/samba-autostart.sh`
+>
+> **手动安装**：
+> ```bash
+> adb push scripts/samba-autostart.sh /data/local/tmp/
+> adb shell "su -c 'cp /data/local/tmp/samba-autostart.sh /data/adb/service.d/ && chmod 755 /data/adb/service.d/samba-autostart.sh'"
+> ```
+>
+> **执行日志**：`/data/local/tmp/samba-autostart.log`
 
 ## 安全提醒
 
@@ -294,6 +301,7 @@ android-samba-root/
 │   ├── stop-smbd.sh            # 停止 Samba 服务（Termux 中执行）
 │   ├── port-forward.sh         # iptables 445→4445 端口转发（root shell 中执行）
 │   ├── mount-xunlei.sh         # 挂载迅雷下载目录（root shell 中执行）
+│   ├── samba-autostart.sh      # ★ KernelSU 开机自启脚本（iptables + bind mount + smbd）
 │   └── status.sh               # 检查 Samba 运行状态（Termux 中执行）
 └── docs/
     └── troubleshooting.md      # 常见问题排查
