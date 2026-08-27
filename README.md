@@ -3,10 +3,10 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: '2c0a4fc9-639b-4fef-bc32-2207c9c1d0c5'
-  PropagateID: '2c0a4fc9-639b-4fef-bc32-2207c9c1d0c5'
-  ReservedCode1: '75ec3bfd-c216-40fd-bd41-4d0ddabbae3d'
-  ReservedCode2: '75ec3bfd-c216-40fd-bd41-4d0ddabbae3d'
+  ProduceID: '691fe459-d380-4b49-a5a3-870f8c3ea2ec'
+  PropagateID: '691fe459-d380-4b49-a5a3-870f8c3ea2ec'
+  ReservedCode1: '71a942b7-0169-46b5-8c39-ffbb7d9bdf54'
+  ReservedCode2: '71a942b7-0169-46b5-8c39-ffbb7d9bdf54'
 ---
 
 # Android Samba (Root) — 已 root 安卓手机局域网文件共享
@@ -22,7 +22,68 @@ AIGC:
 | 网络 | 手机与电脑在同一局域网（同一 WiFi） |
 | 手机 | Android 10+，架构 arm64（其他架构需自行调整） |
 
-## 快速开始
+---
+
+## 一键脚本（推荐）
+
+提供两种一键脚本，覆盖全自动和手动场景。
+
+### 方式 A：电脑端全自动部署（推荐）
+
+在 Windows 电脑上用 PowerShell 通过 ADB 一键完成推送、安装、配置、端口转发：
+
+```powershell
+git clone https://github.com/deku772/android-samba-root.git
+cd android-samba-root
+
+# 全自动部署（推送文件 → 安装 Samba → 配置 → iptables 端口转发）
+.\deploy.ps1 -Auto
+
+# 交互式部署（每步确认）
+.\deploy.ps1
+
+# 其他命令
+.\deploy.ps1 -Status    # 查看手机端 Samba 运行状态
+.\deploy.ps1 -Stop       # 停止手机端 Samba
+.\deploy.ps1 -Test       # 从电脑测试 SMB 连接
+```
+
+> **注意**：`deploy.ps1` 能自动完成除启动 smbd 外的所有步骤。
+> 最后一步需要你在手机上打开 Termux App 手动执行启动命令（脚本会提示）。
+> 这是因为 Android 安全机制限制，ADB/su 启动的进程无法访问 /sdcard。
+
+### 方式 B：手机端一键配置
+
+如果已手动将仓库文件传到手机，或通过 SSH 在 Termux 中操作：
+
+```bash
+# 全自动配置（安装 → 配置 → 修复 tdb → iptables → 启动）
+bash setup.sh --auto
+
+# 交互式配置（每步确认）
+bash setup.sh
+
+# 其他命令
+bash setup.sh --status   # 查看运行状态
+bash setup.sh --stop      # 停止服务
+bash setup.sh --help      # 显示帮助
+```
+
+`setup.sh` 自动完成 5 个步骤：
+
+| 步骤 | 操作 | 说明 |
+|------|------|------|
+| 1 | 安装 Samba | `pkg install samba` |
+| 2 | 写入配置 | 匿名共享 /sdcard，端口 4445 |
+| 3 | 修复 tdb 权限 | 删除 root 属主的 tdb 文件，防止 smbd 崩溃 |
+| 4 | iptables 端口转发 | 445 → 4445，让 Windows 直接访问（需 root） |
+| 5 | 启动 smbd | 验证进程和端口，输出访问地址 |
+
+---
+
+## 手动分步操作
+
+如果希望了解每一步细节，或一键脚本遇到问题，可按以下步骤手动操作。
 
 ### 1. 安装 Samba（在 Termux App 中执行）
 
@@ -92,6 +153,8 @@ Windows 资源管理器地址栏输入：
 
 例如 `\\192.168.1.93\sdcard`，无需密码，直接访问。
 
+---
+
 ## 重要注意事项
 
 ### 为什么必须在 Termux App 中手动启动 smbd？
@@ -118,14 +181,16 @@ Termux 不是系统服务，smbd 进程在手机重启后不会自动运行。�
 ## 安全提醒
 
 - **匿名共享整个 /sdcard**：同一 WiFi 下任何设备都能访问手机全部文件，包括照片、应用数据
-- 建议只在可信局域网使用，用完后关闭 smbd：`pkill smbd`
-- 如需更安全的配置，可设置用户名密码访问（参考 `config/smb-auth.conf`）
+- 建议只在可信局域网使用，用完后关闭 smbd：`bash setup.sh --stop`
+- 如需更安全的配置，可设置用户名密码访问
 
 ## 仓库结构
 
 ```
 android-samba-root/
-├── README.md                  # 本说明文档
+├── setup.sh                   # ★ 一键配置脚本（手机端，Termux 中执行）
+├── deploy.ps1                  # ★ 一键部署脚本（电脑端，PowerShell 中执行）
+├── README.md                   # 本说明文档
 ├── config/
 │   └── smb-anonymous.conf      # 匿名共享 /sdcard 配置模板
 ├── scripts/
