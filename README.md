@@ -3,10 +3,10 @@ AIGC:
   ContentProducer: '001191110102MAD55U9H0F10002'
   ContentPropagator: '001191110102MAD55U9H0F10002'
   Label: '1'
-  ProduceID: '3169a92c-af30-4827-bcbd-872ea15bf9af'
-  PropagateID: '3169a92c-af30-4827-bcbd-872ea15bf9af'
-  ReservedCode1: '4f098753-800b-4406-b94d-ea8a38dc06c3'
-  ReservedCode2: '4f098753-800b-4406-b94d-ea8a38dc06c3'
+  ProduceID: '40e4effd-302e-4444-9b1f-29210cc59db2'
+  PropagateID: '40e4effd-302e-4444-9b1f-29210cc59db2'
+  ReservedCode1: 'cb7c6dae-a9c4-4436-ad07-3b283c383b0f'
+  ReservedCode2: 'cb7c6dae-a9c4-4436-ad07-3b283c383b0f'
 ---
 
 # Android Samba (Root) — 已 root 安卓手机局域网文件共享
@@ -219,6 +219,29 @@ Windows 资源管理器地址栏输入：
 
 ---
 
+## 主机名访问（可选）
+
+默认通过 IP 地址访问（`\192.168.1.93\sdcard`）。如需用主机名访问（`\k20p\sdcard`），可在 Windows 电脑上运行：
+
+```powershell
+# 自动检测手机 IP 并更新 hosts 文件（需管理员权限，脚本会自动提权）
+.\update-hosts.ps1
+
+# 指定主机名
+.\update-hosts.ps1 -Hostname myphone
+
+# 指定 IP
+.\update-hosts.ps1 -DeviceIP 192.168.1.93
+
+# 移除映射
+.\update-hosts.ps1 -Remove
+```
+
+> **原理**：nmbd（NetBIOS 名称服务）在 Android Termux 上因 SELinux 限制无法运行，
+> 改用 Windows hosts 文件实现主机名到 IP 的映射。手机 IP 变化后重新运行脚本即可。
+
+---
+
 ## 重要注意事项
 
 ### 为什么 smbd 需要补充组？
@@ -260,6 +283,7 @@ Termux 不是系统服务，smbd 进程在手机重启后不会自动运行。�
 android-samba-root/
 ├── setup.sh                   # ★ 一键配置脚本（手机端，Termux 中执行）
 ├── deploy.ps1                  # ★ 一键部署脚本（电脑端，PowerShell 中执行）
+├── update-hosts.ps1            # ★ Windows hosts 更新脚本（主机名访问）
 ├── README.md                   # 本说明文档
 ├── config/
 │   └── smb-anonymous.conf      # 匿名共享 /sdcard + 迅雷下载目录 配置模板

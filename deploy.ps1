@@ -123,6 +123,7 @@ function Push-Repo {
     & adb push "$repoDir\scripts\stop-smbd.sh" "$remoteDir/scripts/" 2>&1 | Out-Null
     & adb push "$repoDir\scripts\port-forward.sh" "$remoteDir/scripts/" 2>&1 | Out-Null
     & adb push "$repoDir\scripts\status.sh" "$remoteDir/scripts/" 2>&1 | Out-Null
+    & adb push "$repoDir\scripts\mount-xunlei.sh" "$remoteDir/scripts/" 2>&1 | Out-Null
     Write-Ok "所有脚本已推送到 $remoteDir"
 }
 
@@ -275,6 +276,9 @@ if ($testDir -match "个目录|Dir\(s\)") {
     Write-Header "部署完成！"
     Write-Host "  资源管理器地址：\\$ip\sdcard" -ForegroundColor Green
     Write-Host "  映射网络驱动器：net use Z: \\$ip\sdcard" -ForegroundColor Green
+    Write-Host ""
+    Write-Info "如需用主机名访问（\\k20p\sdcard），请运行："
+    Write-Host "  .\update-hosts.ps1" -ForegroundColor Cyan
 } else {
     Write-Warn2 "自动测试未通过，请确认 smbd 已在 Termux 中启动"
     Write-Info "手动测试：dir \\$ip\sdcard"
